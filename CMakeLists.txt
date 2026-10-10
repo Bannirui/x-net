@@ -1,5 +1,5 @@
-# xnet: Linux epoll + reactor 网络库
-# 既可作为独立顶层项目构建，也可被父仓库 add_subdirectory 引入。
+# xnet:Linux epoll+reactor网络库
+# 既可作为独立顶层项目构建，也可被父仓库add_subdirectory引入。
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     cmake_minimum_required(VERSION 3.21)
@@ -9,7 +9,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(CMAKE_CXX_EXTENSIONS OFF)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     include(CTest)
+    option(XNET_BUILD_TESTS "Build xnet tests" ON)
+else()
+    option(XNET_BUILD_TESTS "Build xnet tests" OFF)
 endif()
+
+set(XNET_VERSION 1.0.0)
 
 find_package(Threads REQUIRED)
 
@@ -22,7 +27,7 @@ target_include_directories(xnet PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-if(BUILD_TESTING)
+if(XNET_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
@@ -40,7 +45,7 @@ configure_package_config_file(
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/xnet)
 write_basic_package_version_file(
     ${CMAKE_CURRENT_BINARY_DIR}/xnetConfigVersion.cmake
-    VERSION ${PROJECT_VERSION}
+    VERSION ${XNET_VERSION}
     COMPATIBILITY SameMajorVersion)
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/xnetConfig.cmake
