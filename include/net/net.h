@@ -9,10 +9,12 @@
 
 enum class IoStatus {
     Ok,
+    // socket被设置成非阻塞模型时 调用系统调用 无法完成I/O操作 系统会返回EAGAIN或EWOULDBLOCK 而不是一直阻塞等待
     WouldBlock,
     Closed,
 };
 
+// socket配置的key
 enum class SocketOption {
     TcpNoDelay,
     KeepAlive,
@@ -84,7 +86,9 @@ private:
 // 服务端
 class Listener {
 public:
-    // 监听端口 backlog<0时用系统默认(SOMAXCONN)
+    
+    /// @brief 监听端口
+    /// @param backlog 系统调用listen的参数 0-表示用系统默认
     Listener(const std::string& host, std::uint16_t port, int backlog = -1);
 
     ~Listener();

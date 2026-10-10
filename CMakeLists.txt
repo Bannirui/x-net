@@ -20,7 +20,6 @@ find_package(Threads REQUIRED)
 
 file(GLOB_RECURSE sources CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 add_library(xnet STATIC ${sources})
-add_library(xnet::xnet ALIAS xnet)
 
 target_link_libraries(xnet PUBLIC Threads::Threads)
 target_include_directories(xnet PUBLIC

@@ -21,12 +21,17 @@ Channel::~Channel() {
 }
 
 void Channel::start() {
+    // 读写socket非阻塞
     setNonBlocking(connection_.fd());
     std::shared_ptr<Channel> self = shared_from_this();
     loop_->runInLoop([self] {
         self->pipeline_.fireChannelActive();
         self->loop_->add(self->connection_.fd(), kReadable,
-                         [self](std::uint32_t events) { self->handleEvents(events); });
+                         [self](std::uint32_t events) {
+                            // TCP有数据进来 处理读写
+                            self->handleEvents(events);
+                        }
+                    );
     });
 }
 
@@ -148,10 +153,13 @@ void Channel::handleEvents(std::uint32_t events) {
         return;
     }
     try {
+        // TCP的读写顺序 先写后读
         if ((events & kWritable) != 0) {
+            // 把缓冲区数据发送出去
             doWrite();
         }
         if ((events & (kReadable | kBroken)) != 0) {
+            // 把TCP数据读到缓冲区
             doRead();
         }
     } catch (const std::exception& error) {
@@ -161,12 +169,15 @@ void Channel::handleEvents(std::uint32_t events) {
 }
 
 void Channel::doRead() {
+    // 读写不要串
     if (!reading_) {
         return;
     }
+    // 从TCP收数据缓存起来
     const IoStatus status = recvInto(connection_.fd(), inbound_);
     if (status == IoStatus::Ok) {
         std::any message = std::move(inbound_);
+        // 收到的消息交给handler处理
         pipeline_.fireChannelRead(message);
         pipeline_.fireChannelReadComplete();
     } else if (status == IoStatus::Closed) {
@@ -184,14 +195,16 @@ void Channel::doRead() {
 
 void Channel::doWrite() {
     while (!outbound_.empty()) {
+        // 统计发出去了多少
         std::size_t sent = 0;
-        const IoStatus status =
-                sendFrom(connection_.fd(), outbound_.data(), outbound_.size(), sent);
+        const IoStatus status = sendFrom(connection_.fd(), outbound_.data(), outbound_.size(), sent);
         if (status == IoStatus::Ok) {
+            // 发送成功了 更新待发送缓冲区
             outbound_.consume(sent);
             continue;
         }
         if (status == IoStatus::WouldBlock) {
+            // 一次性没有把缓冲区的数据全部发送出去 保持住写的标识
             enableWriting();
             updateWritability();
             return;
@@ -203,6 +216,7 @@ void Channel::doWrite() {
         closeNow();
         return;
     }
+    // 缓冲区的数据都发完了 抹掉正在写标识
     disableWriting();
     updateWritability();
 }

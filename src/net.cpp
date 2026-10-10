@@ -135,6 +135,10 @@ void setBlocking(int fd) {
     }
 }
 
+/// @brief 系统调用设置socket
+/// @param fd 哪个socket
+/// @param option 键
+/// @param value 值
 void setSocketOption(int fd, SocketOption option, int value) {
     int level = SOL_SOCKET;
     int name = 0;
@@ -164,6 +168,9 @@ void setSocketOption(int fd, SocketOption option, int value) {
     }
 }
 
+/// @brief 从TCP收数据
+/// @param fd 代表TCP 是TCP的本端的socket
+/// @param buffer 收到的数据存到哪儿
 IoStatus recvInto(int fd, ByteBuffer& buffer) {
     std::uint8_t chunk[65536];
     while (true) {
@@ -209,6 +216,7 @@ IoStatus sendFrom(int fd, const void* data, std::size_t size, std::size_t& sent)
             continue;
         }
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // socket是非阻塞模式时 send这个IO操作无法完成时系统会抛出来EAGAIN或者EWOULDBLOCK 而不是一直阻塞在那
             return IoStatus::WouldBlock;
         }
         if (errno == EPIPE || errno == ECONNRESET) {
@@ -344,9 +352,8 @@ IoStatus Listener::acceptNonBlocking(Connection& out) const {
     }
 }
 
-/**
- * 建立TCP连接 要连谁
- */
+
+/// @brief 建立TCP连接
 Connection connectTo(const std::string& host, std::uint16_t port) {
     AddrInfo results = resolve(host, port,/*passive=*/false);
     for (addrinfo* entry = results.info; entry != nullptr; entry = entry->ai_next) {

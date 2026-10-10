@@ -5,20 +5,29 @@ xnet
 
 平台：仅Linux(epoll)，不做跨平台(kqueue/IOCP不在范围内)。
 
-[x-map-reduce](https://github.com/Bannirui/x-map-reduce.git)仓库内开发，作为独立库的雏形；API稳定后会用`git subtree split -P net`拆到独立仓库。
-
-
 ## 1 BUILD
 
-`net/`既可作独立顶层项目，也可被父仓库`add_subdirectory`引入。
+`net/`既可作独立顶层项目，也可被父仓库`fetchContent`引入。
 
 ```sh
-cmake -B build -S net
+cmake -B build -S .
 cmake --build build -j
 ctest --test-dir build
 ```
 
-安装后别的工程可 `find_package(xnet)`+`target_link_libraries(app PRIVATE xnet::xnet)`：
+父仓库`FetchContent`引入：
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(xnet
+    GIT_REPOSITORY https://github.com/Bannirui/xnet.git
+    GIT_TAG        master
+)
+FetchContent_MakeAvailable(xnet)
+target_link_libraries(app PRIVATE xnet)
+```
+
+安装后别的工程可 `find_package(xnet)`+`target_link_libraries(app PRIVATE xnet)`：
 
 ```sh
 cmake --install build --prefix /your/prefix

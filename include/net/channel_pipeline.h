@@ -63,11 +63,12 @@ public:
     void closeFrom(std::size_t index);
 
 private:
+    // Netty中的HandlerContext
     struct Entry {
         std::shared_ptr<ChannelHandler> handler;
         std::unique_ptr<ChannelHandlerContext> context;
     };
-
     Channel* channel_ = nullptr;
+    // handler链
     std::vector<Entry> entries_;
 };
