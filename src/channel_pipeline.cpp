@@ -1,5 +1,5 @@
-#include "channel_pipeline.h"
-#include "channel.h"
+#include "xnet/channel_pipeline.h"
+#include "xnet/channel.h"
 
 #include <any>
 

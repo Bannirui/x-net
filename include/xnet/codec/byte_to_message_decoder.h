@@ -1,7 +1,7 @@
 #pragma once
 
-#include "buffer.h"
-#include "channel_handler.h"
+#include "xnet/buffer.h"
+#include "xnet/channel_handler.h"
 
 #include <any>
 

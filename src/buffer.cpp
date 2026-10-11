@@ -1,4 +1,4 @@
-#include"buffer.h"
+#include"xnet/buffer.h"
 
 #include<stdexcept>
 
