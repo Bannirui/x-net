@@ -22,6 +22,22 @@ Notifier::~Notifier() {
     }
 }
 
+Notifier::Notifier(Notifier&& other)
+    :fd_(other.fd_) {
+    other.fd_ = -1;
+}
+
+Notifier& Notifier::operator=(Notifier&& other) {
+    if(this != &other) {
+        if(fd_ >=0) {
+            ::close(fd_);
+        }
+        fd_ = other.fd_;
+        other.fd_ = -1;
+    }
+    return *this;
+}
+
 void Notifier::notify() noexcept {
     const std::uint64_t one = 1;
     const ssize_t written = ::write(fd_, &one, sizeof(one));
