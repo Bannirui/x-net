@@ -46,15 +46,15 @@ void Poller::modify(int fd, std::uint32_t events) {
     }
 }
 
-    void Poller::remove(int fd) {
-        // fd可能已经被移除或者关闭 这两种情况都当成已移除 不再抛异常
-        if (::epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, nullptr) != 0) {
-            if (errno == ENOENT || errno == EBADF) {
-                return;
-            }
-            throw systemError("epoll_ctl(DEL) failed");
+void Poller::remove(int fd) {
+    // fd可能已经被移除或者关闭 这两种情况都当成已移除 不再抛异常
+    if (::epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, nullptr) != 0) {
+        if (errno == ENOENT || errno == EBADF) {
+            return;
         }
+        throw systemError("epoll_ctl(DEL) failed");
     }
+}
 
 std::vector<Event> Poller::wait(int timeoutMs) {
     std::vector<epoll_event> events(64);

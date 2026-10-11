@@ -41,8 +41,7 @@ bool LengthFieldBasedFrameDecoder::decode(std::any& out) {
         throw std::runtime_error("length field frame decoder: strip exceeds frame");
     }
     const std::size_t payloadLength = frameLength - initialBytesToStrip_;
-    std::vector<std::uint8_t> frame(in.data() + initialBytesToStrip_,
-                                    in.data() + initialBytesToStrip_ + payloadLength);
+    std::vector<std::uint8_t> frame(in.data() + initialBytesToStrip_, in.data() + initialBytesToStrip_ + payloadLength);
     in.consume(frameLength);
     out = ByteBuffer(frame);
     return true;
