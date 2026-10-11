@@ -1,8 +1,8 @@
 #pragma once
 
-#include "net/buffer.h"
-#include "net/channel_handler.h"
-#include "net/channel_handler_context.h"
+#include "buffer.h"
+#include "channel_handler.h"
+#include "channel_handler_context.h"
 
 #include <any>
 #include <utility>

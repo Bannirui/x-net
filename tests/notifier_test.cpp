@@ -1,5 +1,5 @@
-#include "net/event_loop.h"
-#include "net/notifier.h"
+#include "event_loop.h"
+#include "notifier.h"
 
 #include <atomic>
 #include <iostream>

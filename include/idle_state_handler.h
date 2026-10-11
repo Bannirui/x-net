@@ -1,7 +1,7 @@
 #pragma once
 
-#include "net/channel_handler.h"
-#include "net/event_loop.h"
+#include "channel_handler.h"
+#include "event_loop.h"
 
 #include <any>
 #include <chrono>

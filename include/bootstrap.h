@@ -1,6 +1,6 @@
 #pragma once
 
-#include"net/net.h"
+#include"net.h"
 
 #include<cstdint>
 #include<functional>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "net/codec/byte_to_message_decoder.h"
+#include "codec/byte_to_message_decoder.h"
 
 #include <any>
 #include <cstddef>

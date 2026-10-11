@@ -1,7 +1,7 @@
 #pragma once
 
-#include "net/channel_handler.h"
-#include "net/channel_handler_context.h"
+#include "channel_handler.h"
+#include "channel_handler_context.h"
 
 #include <any>
 #include <cstddef>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "net/buffer.h"
-#include "net/channel_pipeline.h"
-#include "net/net.h"
+#include "buffer.h"
+#include "channel_pipeline.h"
+#include "net.h"
 
 #include <any>
 #include <cstddef>

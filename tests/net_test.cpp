@@ -1,5 +1,5 @@
-#include "net/buffer.h"
-#include "net/net.h"
+#include "buffer.h"
+#include "net.h"
 
 #include <atomic>
 #include <cstdint>

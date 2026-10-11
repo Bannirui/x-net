@@ -1,7 +1,7 @@
 #pragma once
 
-#include"net/notifier.h"
-#include"net/timer.h"
+#include"notifier.h"
+#include"timer.h"
 
 #include<atomic>
 #include<cstdint>

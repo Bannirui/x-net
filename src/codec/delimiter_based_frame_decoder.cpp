@@ -1,6 +1,6 @@
-#include "net/codec/delimiter_based_frame_decoder.h"
+#include "codec/delimiter_based_frame_decoder.h"
 
-#include "net/buffer.h"
+#include "buffer.h"
 
 #include <any>
 #include <cstdint>

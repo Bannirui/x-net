@@ -1,6 +1,6 @@
 #pragma once
 
-#include"net/buffer.h"
+#include"buffer.h"
 
 #include<cstddef>
 #include<cstdint>
