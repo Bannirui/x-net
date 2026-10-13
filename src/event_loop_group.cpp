@@ -1,13 +1,14 @@
-#include"xnet/event_loop_group.h"
+#include "xnet/event_loop_group.h"
 
-#include<stdexcept>
+#include <stdexcept>
 
-EventLoopGroup::EventLoopGroup(std::size_t loops) {
-    if (loops == 0) {
+EventLoopGroup::EventLoopGroup(std::size_t n) {
+    if (n == 0) {
         throw std::runtime_error("event loop group needs at least one loop");
     }
-    loops_.reserve(loops);
-    for (std::size_t i = 0; i < loops; ++i) {
+    loops_.reserve(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        // 创建事件循环器
         loops_.emplace_back(std::make_unique<EventLoop>());
     }
 }
@@ -20,12 +21,16 @@ void EventLoopGroup::start() {
     threads_.reserve(loops_.size());
     for (auto& loop : loops_) {
         EventLoop* raw = loop.get();
-        threads_.emplace_back([raw] { raw->run(); });
+        // 构造Thread实例 起线程+回调
+        threads_.emplace_back([raw] {
+            raw->run();
+        });
     }
 }
 
 void EventLoopGroup::stop() {
     for (auto& loop : loops_) {
+        // EventLoop里面的任务收尾
         loop->stop();
     }
     for (std::thread& thread : threads_) {

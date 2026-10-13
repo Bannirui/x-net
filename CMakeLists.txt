@@ -14,6 +14,8 @@ else()
     option(XNET_BUILD_TESTS "Build xnet tests" OFF)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(XNET_VERSION 1.0.0)
 
 find_package(Threads REQUIRED)

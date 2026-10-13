@@ -24,9 +24,10 @@
         "*.h": "cpp",
         "*.in": "cmake"
     },
+    // 目录树不显示的文件夹
     "files.exclude": {
+        "**/.idea": true,
         "**/.git": true,
-        "**/build": true
     },
     "search.exclude": {
         "**/build": true

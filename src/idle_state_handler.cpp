@@ -1,15 +1,14 @@
 #include "xnet/idle_state_handler.h"
+
 #include "xnet/channel.h"
 #include "xnet/channel_handler_context.h"
 
 #include <algorithm>
 #include <any>
 
-IdleStateHandler::IdleStateHandler(std::chrono::milliseconds readerIdle,
-                                   std::chrono::milliseconds writerIdle,
+IdleStateHandler::IdleStateHandler(std::chrono::milliseconds readerIdle, std::chrono::milliseconds writerIdle,
                                    std::chrono::milliseconds allIdle)
-    : readerIdle_(readerIdle), writerIdle_(writerIdle), allIdle_(allIdle) {
-}
+    : readerIdle_(readerIdle), writerIdle_(writerIdle), allIdle_(allIdle) {}
 
 void IdleStateHandler::channelActive(ChannelHandlerContext& ctx) {
     loop_ = ctx.channel().loop();
@@ -26,36 +25,46 @@ void IdleStateHandler::channelActive(ChannelHandlerContext& ctx) {
     if (allIdle_.count() > 0) {
         interval = interval.count() == 0 ? allIdle_ : std::min(interval, allIdle_);
     }
+    // 多久检测一次连接状态
     if (interval.count() > 0) {
-        timerId_ = loop_->addInterval(interval, [this, &ctx] { check(ctx); });
+        // 实现的机制是周期性定时器
+        timerId_ = loop_->addInterval(interval, [this, &ctx] {
+            check(ctx);
+        });
     }
+
     ctx.fireChannelActive();
 }
 
 void IdleStateHandler::channelRead(ChannelHandlerContext& ctx, std::any& message) {
     lastRead_ = std::chrono::steady_clock::now();
+
     ctx.fireChannelRead(message);
 }
 
 void IdleStateHandler::channelInactive(ChannelHandlerContext& ctx) {
+    // 连接断开的时候拿掉定时器
     if (loop_ != nullptr && timerId_ != TimerQueue::kInvalidId) {
         loop_->cancelTimer(timerId_);
         timerId_ = TimerQueue::kInvalidId;
     }
+
     ctx.fireChannelInactive();
 }
 
 void IdleStateHandler::write(ChannelHandlerContext& ctx, std::any& message) {
     lastWrite_ = std::chrono::steady_clock::now();
+
     ctx.write(message);
 }
 
 void IdleStateHandler::check(ChannelHandlerContext& ctx) {
     const auto now = std::chrono::steady_clock::now();
+    // 判断TCP是不是空闲了
     const bool readerIdle = readerIdle_.count() > 0 && now - lastRead_ >= readerIdle_;
     const bool writerIdle = writerIdle_.count() > 0 && now - lastWrite_ >= writerIdle_;
-    const bool allIdle = allIdle_.count() > 0
-            && now - lastRead_ >= allIdle_ && now - lastWrite_ >= allIdle_;
+    const bool allIdle = allIdle_.count() > 0 && now - lastRead_ >= allIdle_ && now - lastWrite_ >= allIdle_;
+    // 回调给自定义事件函数
     if (readerIdle) {
         lastRead_ = now;
         std::any event = IdleState::ReaderIdle;

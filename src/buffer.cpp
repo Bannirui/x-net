@@ -1,9 +1,8 @@
-#include"xnet/buffer.h"
+#include "xnet/buffer.h"
 
-#include<stdexcept>
+#include <stdexcept>
 
-ByteBuffer::ByteBuffer(const std::vector<std::uint8_t>& data) : storage_(data) {
-}
+ByteBuffer::ByteBuffer(const std::vector<std::uint8_t>& data) : storage_(data) {}
 
 void ByteBuffer::compact() {
     if (readOffset_ == 0) {
@@ -30,7 +29,6 @@ void ByteBuffer::append(const std::vector<std::uint8_t>& data) {
     append(data.data(), data.size());
 }
 
-/// @param size 已经发出去这么多数据了 更新缓冲区 从缓冲区摘掉这么多的数据
 void ByteBuffer::consume(std::size_t size) {
     if (size > this->size()) {
         throw std::out_of_range("ByteBuffer::consume past end");
@@ -43,7 +41,8 @@ std::vector<std::uint8_t> ByteBuffer::take(std::size_t size) {
     if (size > this->size()) {
         throw std::out_of_range("ByteBuffer::take past end");
     }
-    std::vector<std::uint8_t> out(storage_.begin() + static_cast<std::ptrdiff_t>(readOffset_), storage_.begin() + static_cast<std::ptrdiff_t>(readOffset_ + size));
+    std::vector<std::uint8_t> out(storage_.begin() + static_cast<std::ptrdiff_t>(readOffset_),
+                                  storage_.begin() + static_cast<std::ptrdiff_t>(readOffset_ + size));
     readOffset_ += size;
     compact();
     return out;

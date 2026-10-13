@@ -1,4 +1,5 @@
 #include "xnet/channel_pipeline.h"
+
 #include "xnet/channel.h"
 
 #include <any>
@@ -7,48 +8,12 @@ void ChannelPipeline::attach(Channel& channel) {
     channel_ = &channel;
 }
 
-Channel& ChannelPipeline::channel() const noexcept {
-    return *channel_;
-}
-
 void ChannelPipeline::addLast(std::shared_ptr<ChannelHandler> handler) {
     const std::size_t index = entries_.size();
     Entry entry;
     entry.context = std::make_unique<ChannelHandlerContext>(*this, index);
     entry.handler = std::move(handler);
     entries_.push_back(std::move(entry));
-}
-
-std::size_t ChannelPipeline::size() const noexcept {
-    return entries_.size();
-}
-
-void ChannelPipeline::fireChannelActive() {
-    fireChannelActiveFrom(0);
-}
-
-void ChannelPipeline::fireChannelRead(std::any& message) {
-    fireChannelReadFrom(0, message);
-}
-
-void ChannelPipeline::fireChannelReadComplete() {
-    fireChannelReadCompleteFrom(0);
-}
-
-void ChannelPipeline::fireChannelInactive() {
-    fireChannelInactiveFrom(0);
-}
-
-void ChannelPipeline::fireChannelWritabilityChanged() {
-    fireChannelWritabilityChangedFrom(0);
-}
-
-void ChannelPipeline::fireUserEventTriggered(std::any& event) {
-    fireUserEventTriggeredFrom(0, event);
-}
-
-void ChannelPipeline::fireExceptionCaught(const std::exception& error) {
-    fireExceptionCaughtFrom(0, error);
 }
 
 void ChannelPipeline::fireChannelActiveFrom(std::size_t index) {

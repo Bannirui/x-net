@@ -1,4 +1,5 @@
 #include "xnet/bootstrap.h"
+
 #include "xnet/channel.h"
 #include "xnet/event_loop.h"
 #include "xnet/event_loop_group.h"
@@ -17,7 +18,7 @@ namespace {
             setSocketOption(fd, entry.first, entry.second);
         }
     }
-} // namespace
+}  // namespace
 
 ServerBootstrap& ServerBootstrap::group(EventLoopGroup& group) {
     boss_ = &group;
@@ -119,12 +120,13 @@ std::shared_ptr<Channel> ClientBootstrap::connect(const std::string& host, std::
     Connection connection = connectTo(host, port);
     // 配置socket
     applyOptions(connection.fd(), options_);
-    // 绑定线程和TCP
+    // 现在仅仅是绑定线程和TCP的逻辑关系 并没有把TCP的本端socket注册到selector上
     auto channel = std::make_shared<Channel>(std::move(connection), loop);
     if (initializer_) {
         // 初始化Pipeline
         initializer_(*channel);
     }
+    // 把TCP注册到事件循环器上 实现物理上的TCP和selector的注册关系 进而也就是EventLoop线程和TCP绑定
     channel->start();
     return channel;
 }

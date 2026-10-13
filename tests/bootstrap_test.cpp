@@ -1,4 +1,5 @@
 #include "xnet/bootstrap.h"
+
 #include "xnet/buffer.h"
 #include "xnet/channel.h"
 #include "xnet/channel_handler.h"
@@ -20,66 +21,65 @@
 
 namespace {
 
-std::atomic<int> failures{0};
+    std::atomic<int> failures{0};
 
-void check(bool condition, const std::string& message) {
-    if (!condition) {
-        std::cerr << "FAIL: " << message << '\n';
-        ++failures;
-    }
-}
-
-class EchoHandler : public ChannelInboundHandler {
-public:
-    void channelRead(ChannelHandlerContext& ctx, std::any& message) override {
-        if (std::any_cast<ByteBuffer>(&message) == nullptr) {
-            return;
+    void check(bool condition, const std::string& message) {
+        if (!condition) {
+            std::cerr << "FAIL: " << message << '\n';
+            ++failures;
         }
-        ctx.write(message);
     }
-};
 
-class UpperOutboundHandler : public ChannelOutboundHandler {
-public:
-    void write(ChannelHandlerContext& ctx, std::any& message) override {
-        ByteBuffer* buffer = std::any_cast<ByteBuffer>(&message);
-        if (buffer == nullptr) {
+    class EchoHandler : public ChannelInboundHandler {
+    public:
+        void channelRead(ChannelHandlerContext& ctx, std::any& message) override {
+            if (std::any_cast<ByteBuffer>(&message) == nullptr) {
+                return;
+            }
             ctx.write(message);
-            return;
         }
-        std::vector<std::uint8_t> upper(buffer->data(), buffer->data() + buffer->size());
-        for (std::uint8_t& byte : upper) {
-            byte = static_cast<std::uint8_t>(std::toupper(byte));
-        }
-        std::any encoded = ByteBuffer(upper);
-        ctx.write(encoded);
-    }
-};
+    };
 
-class CollectorHandler : public ChannelInboundHandler {
-public:
-    CollectorHandler(std::size_t want, std::shared_ptr<std::promise<std::string> > promise)
-        : want_(want), promise_(std::move(promise)) {
-    }
-
-    void channelRead(ChannelHandlerContext& ctx, std::any& message) override {
-        ByteBuffer* buffer = std::any_cast<ByteBuffer>(&message);
-        if (buffer == nullptr || fulfilled_) {
-            return;
+    class UpperOutboundHandler : public ChannelOutboundHandler {
+    public:
+        void write(ChannelHandlerContext& ctx, std::any& message) override {
+            ByteBuffer* buffer = std::any_cast<ByteBuffer>(&message);
+            if (buffer == nullptr) {
+                ctx.write(message);
+                return;
+            }
+            std::vector<std::uint8_t> upper(buffer->data(), buffer->data() + buffer->size());
+            for (std::uint8_t& byte : upper) {
+                byte = static_cast<std::uint8_t>(std::toupper(byte));
+            }
+            std::any encoded = ByteBuffer(upper);
+            ctx.write(encoded);
         }
-        collected_.append(reinterpret_cast<const char*>(buffer->data()), buffer->size());
-        if (collected_.size() >= want_) {
-            fulfilled_ = true;
-            promise_->set_value(collected_);
-        }
-    }
+    };
 
-private:
-    std::size_t want_;
-    bool fulfilled_ = false;
-    std::string collected_;
-    std::shared_ptr<std::promise<std::string> > promise_;
-};
+    class CollectorHandler : public ChannelInboundHandler {
+    public:
+        CollectorHandler(std::size_t want, std::shared_ptr<std::promise<std::string> > promise)
+            : want_(want), promise_(std::move(promise)) {}
+
+        void channelRead(ChannelHandlerContext& ctx, std::any& message) override {
+            ByteBuffer* buffer = std::any_cast<ByteBuffer>(&message);
+            if (buffer == nullptr || fulfilled_) {
+                return;
+            }
+            collected_.append(reinterpret_cast<const char*>(buffer->data()), buffer->size());
+            if (collected_.size() >= want_) {
+                fulfilled_ = true;
+                promise_->set_value(collected_);
+            }
+        }
+
+    private:
+        std::size_t want_;
+        bool fulfilled_ = false;
+        std::string collected_;
+        std::shared_ptr<std::promise<std::string> > promise_;
+    };
 
 }  // namespace
 

@@ -1,16 +1,16 @@
 #include "xnet/channel.h"
+
 #include "xnet/event_loop.h"
 
 #include <any>
 #include <cstdint>
 #include <exception>
+#include <unistd.h>
 #include <utility>
 #include <vector>
 
-#include <unistd.h>
-
-Channel::Channel(Connection connection, EventLoop* loop)
-    : connection_(std::move(connection)), loop_(loop) {
+Channel::Channel(Connection connection, EventLoop* loop) : connection_(std::move(connection)), loop_(loop) {
+    // Channel跟Pipeline一一映射
     pipeline_.attach(*this);
 }
 
@@ -21,17 +21,26 @@ Channel::~Channel() {
 }
 
 void Channel::start() {
-    // 读写socket非阻塞
+    // 设置socket非阻塞
     setNonBlocking(connection_.fd());
     std::shared_ptr<Channel> self = shared_from_this();
     loop_->runInLoop([self] {
         self->pipeline_.fireChannelActive();
-        self->loop_->add(self->connection_.fd(), kReadable,
-                         [self](std::uint32_t events) {
-                            // TCP有数据进来 处理读写
-                            self->handleEvents(events);
-                        }
-                    );
+        // 把TCP的本端socket注册到selector上
+        self->loop_->add(self->connection_.fd(), kReadable, [self](std::uint32_t events) {
+            // TCP有数据进来 处理读写
+            self->handleEvents(events);
+        });
+    });
+}
+
+void Channel::write(std::any message) {
+    std::shared_ptr<Channel> self = shared_from_this();
+    // 交给EventLoop 异步写给Pipeline
+    loop_->runInLoop([self, message = std::move(message)]() mutable {
+        if (!self->closed_) {
+            self->pipeline_.write(message);
+        }
     });
 }
 
@@ -46,15 +55,6 @@ void Channel::write(const std::vector<std::uint8_t>& data) {
     write(std::any(std::move(buffer)));
 }
 
-void Channel::write(std::any message) {
-    std::shared_ptr<Channel> self = shared_from_this();
-    loop_->runInLoop([self, message = std::move(message)]() mutable {
-        if (!self->closed_) {
-            self->pipeline_.write(message);
-        }
-    });
-}
-
 void Channel::writeTransport(std::any& message) {
     ByteBuffer* buffer = std::any_cast<ByteBuffer>(&message);
     if (buffer == nullptr) {
@@ -62,6 +62,7 @@ void Channel::writeTransport(std::any& message) {
     }
     std::vector<std::uint8_t> bytes(buffer->data(), buffer->data() + buffer->size());
     std::shared_ptr<Channel> self = shared_from_this();
+    // 同步操作 用EventLoop转异步
     loop_->runInLoop([self, bytes = std::move(bytes)]() mutable {
         if (self->closed_) {
             return;
@@ -131,11 +132,14 @@ void Channel::closeInLoop() {
     closeNow();
 }
 
+//
 void Channel::closeNow() {
     if (closed_) {
         return;
     }
+    // 关闭标识
     closed_ = true;
+    // 向handler播报channel关闭的事件
     pipeline_.fireChannelInactive();
     // 把fd所有权从Connection里拿出来 交给事件循环 先摘epoll再close 避免在已关闭的fd上删事件
     const int fd = connection_.release();
